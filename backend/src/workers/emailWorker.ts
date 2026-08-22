@@ -13,7 +13,7 @@ const workerRedis = new IORedis(config.redisUrl, {
 });
 
 async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
-  const { emailJobId, recipient, subject, body, senderEmail, senderId } = job.data;
+  const { emailJobId, recipient, subject, body, senderEmail, senderId, batchId, batchMaxPerHour } = job.data;
 
   // idempotency: skip if already sent
   const emailJob = await prisma.emailJob.findUnique({
@@ -38,7 +38,7 @@ async function processEmailJob(job: Job<EmailJobData>): Promise<void> {
   });
 
   // check rate limits before sending
-  const { allowed, delayUntilNextWindowMs } = await tryAcquireRateLimit(senderEmail);
+  const { allowed, delayUntilNextWindowMs } = await tryAcquireRateLimit(senderEmail, batchId, batchMaxPerHour);
 
   if (!allowed) {
     console.log(`rate limit hit for ${senderEmail}, rescheduling job ${emailJobId} in ${delayUntilNextWindowMs}ms`);

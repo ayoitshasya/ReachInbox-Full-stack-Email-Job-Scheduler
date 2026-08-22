@@ -37,7 +37,11 @@ function getNextHourMs(): number {
   return next.getTime() - now.getTime();
 }
 
-export async function tryAcquireRateLimit(senderEmail: string): Promise<{
+export async function tryAcquireRateLimit(
+  senderEmail: string,
+  batchId?: string,
+  batchMaxPerHour?: number
+): Promise<{
   allowed: boolean;
   delayUntilNextWindowMs: number;
 }> {
@@ -55,11 +59,34 @@ export async function tryAcquireRateLimit(senderEmail: string): Promise<{
     '3600'
   ) as number;
 
-  if (result === 1) {
-    return { allowed: true, delayUntilNextWindowMs: 0 };
+  if (result !== 1) {
+    return { allowed: false, delayUntilNextWindowMs: getNextHourMs() };
   }
 
-  return { allowed: false, delayUntilNextWindowMs: getNextHourMs() };
+  // check optional per-batch hourly cap
+  if (batchId && batchMaxPerHour && batchMaxPerHour > 0) {
+    const batchKey = `rate:batch:${batchId}:${window}`;
+    const batchScript = `
+      local key = KEYS[1]
+      local max = tonumber(ARGV[1])
+      local count = tonumber(redis.call('GET', key) or 0)
+      if count >= max then return 0 end
+      redis.call('INCR', key)
+      redis.call('EXPIRE', key, 3600)
+      return 1
+    `;
+    const batchResult = await redis.eval(batchScript, 1, batchKey, String(batchMaxPerHour)) as number;
+    if (batchResult !== 1) {
+      // undo global/sender increment since we're blocking this job
+      await redis.eval(
+        `redis.call('DECR', KEYS[1]); redis.call('DECR', KEYS[2]); return 1`,
+        2, globalKey, senderKey
+      );
+      return { allowed: false, delayUntilNextWindowMs: getNextHourMs() };
+    }
+  }
+
+  return { allowed: true, delayUntilNextWindowMs: 0 };
 }
 
 export async function getRateLimitStatus(): Promise<{

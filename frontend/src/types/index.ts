@@ -46,4 +46,5 @@ export interface ScheduleEmailPayload {
   senderId: string;
   scheduledAt: string;
   delayBetweenMs?: number;
+  batchMaxPerHour?: number;
 }

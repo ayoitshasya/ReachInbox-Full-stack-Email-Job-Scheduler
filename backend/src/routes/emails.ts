@@ -16,11 +16,12 @@ interface ScheduleEmailBody {
   senderId: string;
   scheduledAt: string; // ISO string for the first email
   delayBetweenMs?: number; // delay between consecutive emails in the batch
+  batchMaxPerHour?: number; // optional per-batch hourly send cap
 }
 
 // schedule a batch of emails
 router.post('/schedule', async (req: Request, res: Response) => {
-  const { recipients, subject, body, senderId, scheduledAt, delayBetweenMs = 1000 }: ScheduleEmailBody = req.body;
+  const { recipients, subject, body, senderId, scheduledAt, delayBetweenMs = 1000, batchMaxPerHour }: ScheduleEmailBody = req.body;
 
   if (!recipients?.length || !subject || !body || !senderId || !scheduledAt) {
     res.status(400).json({ error: 'missing required fields' });
@@ -73,6 +74,7 @@ router.post('/schedule', async (req: Request, res: Response) => {
       senderEmail: sender.email,
       senderId: sender.id,
       batchId,
+      ...(batchMaxPerHour ? { batchMaxPerHour } : {}),
     },
     opts: {
       jobId: `email-${job.id}`, // deterministic id prevents duplicates on restart

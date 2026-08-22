@@ -28,6 +28,7 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
   const [senderId, setSenderId] = useState(senders[0]?.id || '');
   const [scheduledAt, setScheduledAt] = useState('');
   const [delayBetweenSecs, setDelayBetweenSecs] = useState('2');
+  const [hourlyLimit, setHourlyLimit] = useState('');
   const [recipients, setRecipients] = useState<string[]>([]);
   const [fileInfo, setFileInfo] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -69,6 +70,7 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
         senderId,
         scheduledAt: startDate.toISOString(),
         delayBetweenMs: parseFloat(delayBetweenSecs) * 1000,
+        ...(hourlyLimit ? { batchMaxPerHour: parseInt(hourlyLimit) } : {}),
       });
 
       toast.success(`scheduled ${result.scheduled} emails`);
@@ -88,6 +90,7 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
     setSenderId(senders[0]?.id || '');
     setScheduledAt('');
     setDelayBetweenSecs('2');
+    setHourlyLimit('');
     setRecipients([]);
     setFileInfo('');
     if (fileRef.current) fileRef.current.value = '';
@@ -173,6 +176,15 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
             step="0.1"
             value={delayBetweenSecs}
             onChange={(e) => setDelayBetweenSecs(e.target.value)}
+          />
+
+          <Input
+            label="hourly limit (optional)"
+            type="number"
+            min="1"
+            placeholder="e.g. 100"
+            value={hourlyLimit}
+            onChange={(e) => setHourlyLimit(e.target.value)}
           />
         </div>
 

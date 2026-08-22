@@ -9,6 +9,8 @@ export interface EmailJobData {
   senderEmail: string;
   senderId: string;
   batchId?: string;
+  // optional per-batch hourly cap set by the user at compose time
+  batchMaxPerHour?: number;
 }
 
 // all email jobs go through this queue
