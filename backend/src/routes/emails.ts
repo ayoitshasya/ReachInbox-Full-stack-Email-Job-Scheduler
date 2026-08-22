@@ -55,7 +55,7 @@ router.post('/schedule', async (req: Request, res: Response) => {
     subject,
     body,
     senderId,
-    userId: req.user!.userId,
+    userId: req.jwtUser!.userId,
     scheduledAt: new Date(startMs + i * delayBetweenMs),
     batchId,
   }));
@@ -108,7 +108,7 @@ router.get('/scheduled', async (req: Request, res: Response) => {
   const [items, total] = await Promise.all([
     prisma.emailJob.findMany({
       where: {
-        userId: req.user!.userId,
+        userId: req.jwtUser!.userId,
         status: { in: ['PENDING', 'PROCESSING', 'RESCHEDULED'] },
       },
       orderBy: { scheduledAt: 'asc' },
@@ -118,7 +118,7 @@ router.get('/scheduled', async (req: Request, res: Response) => {
     }),
     prisma.emailJob.count({
       where: {
-        userId: req.user!.userId,
+        userId: req.jwtUser!.userId,
         status: { in: ['PENDING', 'PROCESSING', 'RESCHEDULED'] },
       },
     }),
@@ -136,7 +136,7 @@ router.get('/sent', async (req: Request, res: Response) => {
   const [items, total] = await Promise.all([
     prisma.emailJob.findMany({
       where: {
-        userId: req.user!.userId,
+        userId: req.jwtUser!.userId,
         status: { in: ['SENT', 'FAILED'] },
       },
       orderBy: { sentAt: 'desc' },
@@ -146,7 +146,7 @@ router.get('/sent', async (req: Request, res: Response) => {
     }),
     prisma.emailJob.count({
       where: {
-        userId: req.user!.userId,
+        userId: req.jwtUser!.userId,
         status: { in: ['SENT', 'FAILED'] },
       },
     }),

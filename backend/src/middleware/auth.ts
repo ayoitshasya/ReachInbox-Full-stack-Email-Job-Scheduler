@@ -7,11 +7,22 @@ export interface JwtPayload {
   email: string;
 }
 
+// extend express user to avoid type conflicts with passport
 declare global {
   namespace Express {
-    interface Request {
-      user?: JwtPayload;
+    interface User {
+      id: string;
+      email: string;
+      name?: string;
+      avatar?: string | null;
     }
+  }
+}
+
+// jwt-authenticated request carries userId on req.jwtUser
+declare module 'express-serve-static-core' {
+  interface Request {
+    jwtUser?: JwtPayload;
   }
 }
 
@@ -25,7 +36,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
   const token = authHeader.slice(7);
   try {
     const payload = jwt.verify(token, config.jwtSecret) as JwtPayload;
-    req.user = payload;
+    req.jwtUser = payload;
     next();
   } catch {
     res.status(401).json({ error: 'invalid or expired token' });
