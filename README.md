@@ -1,25 +1,25 @@
 # ReachInbox Email Scheduler
 
-a full-stack email job scheduler built with express, bullmq, redis, postgres, and react.
+A full-stack email job scheduler built with Express, BullMQ, Redis, Postgres, and React.
 
 ---
 
-## quick start
+## Quick Start
 
-### 1. prerequisites
+### 1. Prerequisites
 
-- node 18+
-- docker + docker compose
+- Node 18+
+- Docker + Docker Compose
 
-### 2. spin up redis and postgres
+### 2. Spin Up Redis and Postgres
 
 ```bash
 docker compose up -d
 ```
 
-this starts redis on `:6379` and postgres on `:5432`.
+This starts Redis on `:6379` and Postgres on `:5432`.
 
-### 3. backend setup
+### 3. Backend Setup
 
 ```bash
 cd backend
@@ -30,9 +30,9 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
-the api server starts on `http://localhost:3001`.
+The API server starts on `http://localhost:3001`.
 
-to run the worker as a **separate process** (for production-like separation):
+To run the worker as a **separate process** (for production-like separation):
 
 ```bash
 # in a second terminal
@@ -40,9 +40,9 @@ cd backend
 npm run worker
 ```
 
-by default, `npm run dev` starts the worker in the same process for convenience.
+By default, `npm run dev` starts the worker in the same process for convenience.
 
-### 4. frontend setup
+### 4. Frontend Setup
 
 ```bash
 cd frontend
@@ -50,129 +50,129 @@ npm install
 npm run dev
 ```
 
-the frontend starts on `http://localhost:5173`.
+The frontend starts on `http://localhost:5173`.
 
-### 5. google oauth setup
+### 5. Google OAuth Setup
 
-1. go to google cloud console ��� credentials → create oauth 2.0 client id
-2. set authorized redirect uri to `http://localhost:3001/api/auth/google/callback`
-3. copy client id and secret into `backend/.env`
+1. Go to Google Cloud Console → Credentials → Create OAuth 2.0 Client ID.
+2. Set the authorized redirect URI to `http://localhost:3001/api/auth/google/callback`.
+3. Copy the client ID and secret into `backend/.env`.
 
-### 6. ethereal email
+### 6. Ethereal Email
 
-ethereal test accounts are created automatically on first startup — no configuration needed. each sent email gets a preview url you can click in the sent emails table.
+Ethereal test accounts are created automatically on first startup — no configuration needed. Each sent email gets a preview URL you can click in the Sent Emails table.
 
 ---
 
-## env vars
+## Environment Variables
 
-copy `backend/.env.example` to `backend/.env` and fill in:
+Copy `backend/.env.example` to `backend/.env` and fill in:
 
-| variable | description |
+| Variable | Description |
 |---|---|
-| `PORT` | express port (default `3001`) |
-| `DATABASE_URL` | postgres connection string |
-| `REDIS_URL` | redis connection url |
-| `GOOGLE_CLIENT_ID` | google oauth client id |
-| `GOOGLE_CLIENT_SECRET` | google oauth client secret |
-| `GOOGLE_CALLBACK_URL` | oauth redirect (default `http://localhost:3001/api/auth/google/callback`) |
-| `JWT_SECRET` | jwt signing secret (use a long random string in production) |
-| `FRONTEND_URL` | frontend origin for cors and oauth redirect |
-| `WORKER_CONCURRENCY` | number of concurrent bullmq jobs (default `5`) |
-| `MIN_SEND_DELAY_MS` | minimum ms between individual email sends (default `500`) |
-| `MAX_EMAILS_PER_HOUR` | global hourly send cap (default `1000`) |
-| `MAX_EMAILS_PER_HOUR_PER_SENDER` | per-sender hourly cap (default `200`) |
+| `PORT` | Express port (default `3001`) |
+| `DATABASE_URL` | Postgres connection string |
+| `REDIS_URL` | Redis connection URL |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `GOOGLE_CALLBACK_URL` | OAuth redirect (default `http://localhost:3001/api/auth/google/callback`) |
+| `JWT_SECRET` | JWT signing secret (use a long random string in production) |
+| `FRONTEND_URL` | Frontend origin for CORS and OAuth redirect |
+| `WORKER_CONCURRENCY` | Number of concurrent BullMQ jobs (default `5`) |
+| `MIN_SEND_DELAY_MS` | Minimum ms between individual email sends (default `500`) |
+| `MAX_EMAILS_PER_HOUR` | Global hourly send cap (default `1000`) |
+| `MAX_EMAILS_PER_HOUR_PER_SENDER` | Per-sender hourly cap (default `200`) |
 
 ---
 
-## architecture
+## Architecture
 
-### scheduling flow
+### Scheduling Flow
 
-1. client posts `/api/emails/schedule` with recipients, subject, body, sender, start time, and delay between sends
-2. api creates one `EmailJob` row in postgres per recipient, with `scheduledAt = startTime + (index * delayBetweenMs)`
-3. api calls `emailQueue.addBulk(...)` — each job gets a deterministic bullmq job id (`email-{dbId}`) and a delay calculated from now until its `scheduledAt`
-4. bullmq stores delayed jobs in redis sorted sets; they fire at the right time regardless of server restarts
-5. the worker picks up each job, checks rate limits, sends via ethereal smtp, and updates postgres
+1. Client posts `/api/emails/schedule` with recipients, subject, body, sender, start time, and delay between sends.
+2. The API creates one `EmailJob` row in Postgres per recipient, with `scheduledAt = startTime + (index * delayBetweenMs)`.
+3. The API calls `emailQueue.addBulk(...)` — each job gets a deterministic BullMQ job ID (`email-{dbId}`) and a delay calculated from now until its `scheduledAt`.
+4. BullMQ stores delayed jobs in Redis sorted sets; they fire at the right time regardless of server restarts.
+5. The worker picks up each job, checks rate limits, sends via Ethereal SMTP, and updates Postgres.
 
-### restart persistence
+### Restart Persistence
 
-jobs are never re-enqueued from postgres on startup. bullmq stores all pending and delayed jobs in redis, so they survive server restarts automatically. the deterministic job id (`email-{dbId}`) means re-enqueueing the same job (e.g. from a buggy retry logic) is a no-op — bullmq deduplicates by job id.
+Jobs are never re-enqueued from Postgres on startup. BullMQ stores all pending and delayed jobs in Redis, so they survive server restarts automatically. The deterministic job ID (`email-{dbId}`) means re-enqueueing the same job (e.g. from a buggy retry) is a no-op — BullMQ deduplicates by job ID.
 
-if the worker crashes while actively processing a job, bullmq's stalled-job detection moves it back to the wait queue after a timeout (default ~30s). the worker then re-processes it; the idempotency check at the top of the processor (skipping jobs already marked `SENT` in postgres) prevents double-sends.
+If the worker crashes while actively processing a job, BullMQ's stalled-job detection moves it back to the wait queue after a timeout (default ~30s). The worker then re-processes it; the idempotency check at the top of the processor (skipping jobs already marked `SENT` in Postgres) prevents double-sends.
 
-### rate limiting
+### Rate Limiting
 
-**design**: redis-backed counters, keyed by hour window + scope. a lua script atomically checks and increments so multiple worker instances can't race past the limit.
+**Design:** Redis-backed counters, keyed by hour window + scope. A Lua script atomically checks and increments so multiple worker instances can't race past the limit.
 
-keys used:
-- `rate:global:{year}-{month}-{day}-{hour}` — global counter, ttl 1 hour
-- `rate:sender:{email}:{window}` — per-sender counter, ttl 1 hour
+Keys used:
+- `rate:global:{year}-{month}-{day}-{hour}` — global counter, TTL 1 hour
+- `rate:sender:{email}:{window}` — per-sender counter, TTL 1 hour
 - `rate:batch:{batchId}:{window}` — optional per-batch cap set at compose time
 
-when a job tries to acquire a rate limit token:
-1. lua script checks both global and sender counters atomically
-2. if either is at limit, returns "denied"
-3. on denial, the job is re-enqueued with `delay = ms_until_next_hour_boundary` and its db status is set to `RESCHEDULED`
-4. jobs within a batch stay in order because they all get the same delay and bullmq processes them fifo within each time window
+When a job tries to acquire a rate limit token:
+1. The Lua script checks both global and sender counters atomically.
+2. If either is at the limit, it returns "denied".
+3. On denial, the job is re-enqueued with `delay = ms_until_next_hour_boundary` and its DB status is set to `RESCHEDULED`.
+4. Jobs within a batch stay in order because they all get the same delay and BullMQ processes them FIFO within each time window.
 
-**why not in-memory?** if you run multiple worker processes (or nodes in k8s), each process would have its own counter and you'd blow past the limit by Nx. redis counters are shared, so the limit holds regardless of worker count.
+**Why not in-memory?** If you run multiple worker processes (or nodes in Kubernetes), each process would have its own counter and you'd blow past the limit by Nx. Redis counters are shared, so the limit holds regardless of worker count.
 
-### minimum delay between sends
+### Minimum Delay Between Sends
 
-the bullmq worker is configured with:
+The BullMQ worker is configured with:
 ```
 limiter: { max: 1, duration: MIN_SEND_DELAY_MS }
 ```
 
-this means the worker processes at most 1 job per `MIN_SEND_DELAY_MS` milliseconds, creating a guaranteed minimum gap between sends at the worker level. default is 500ms. with concurrency > 1, the effective throughput is `concurrency / MIN_SEND_DELAY_MS` jobs per second, but each individual job still has the minimum gap enforced by the queue.
+This means the worker processes at most 1 job per `MIN_SEND_DELAY_MS` milliseconds, creating a guaranteed minimum gap between sends at the worker level. The default is 500ms. With concurrency > 1, the effective throughput is `concurrency / MIN_SEND_DELAY_MS` jobs per second, but each individual job still has the minimum gap enforced by the queue.
 
-### handling 1000+ emails at the same time
+### Handling 1000+ Emails at the Same Time
 
-scheduling 1000 emails for the same start time creates 1000 individual bullmq delayed jobs with `delay = 0`. they all land in the wait queue simultaneously. the worker processes them at its configured concurrency and rate. the rate limiting logic prevents burst delivery — if the hourly cap is 1000, exactly 1000 go out per hour, with the rest rescheduled. no data is lost; nothing crashes; postgres holds the full record.
+Scheduling 1000 emails for the same start time creates 1000 individual BullMQ delayed jobs with `delay = 0`. They all land in the wait queue simultaneously. The worker processes them at its configured concurrency and rate. The rate limiting logic prevents burst delivery — if the hourly cap is 1000, exactly 1000 go out per hour, with the rest rescheduled. No data is lost; nothing crashes; Postgres holds the full record.
 
-### trade-offs and assumptions
+### Trade-offs and Assumptions
 
-- **worker in-process**: by default the worker starts inside the api process (`npm run dev`). this is convenient for local dev but in production you'd run `npm run worker` separately so api and worker can scale independently.
-- **jwt, not sessions**: stateless auth means no session store needed. downside is tokens can't be invalidated before expiry (7 days). for this use case that's fine.
-- **ethereal account creation at startup**: two ethereal accounts are created if none exist. in a real app you'd configure senders manually or via an admin ui.
-- **no websocket/sse**: the dashboard polls every 15 seconds for status updates. for a production product you'd want server-sent events or webhooks to push updates.
-- **prisma**: chosen for typescript-first dx and clean migration workflow. drizzle would be lighter but prisma's type generation is hard to beat for rapid prototyping.
-- **single queue**: all email jobs share one bullmq queue. for very high volume you might shard by sender or priority.
+- **Worker in-process:** By default the worker starts inside the API process (`npm run dev`). This is convenient for local dev but in production you'd run `npm run worker` separately so the API and worker can scale independently.
+- **JWT, not sessions:** Stateless auth means no session store needed. The downside is tokens can't be invalidated before expiry (7 days). For this use case that's acceptable.
+- **Ethereal account creation at startup:** Two Ethereal accounts are created if none exist. In a real app you'd configure senders manually or via an admin UI.
+- **No WebSocket/SSE:** The dashboard polls every 15 seconds for status updates. For a production product you'd want server-sent events or webhooks to push updates.
+- **Prisma:** Chosen for TypeScript-first DX and a clean migration workflow. Drizzle would be lighter, but Prisma's type generation is hard to beat for rapid prototyping.
+- **Single queue:** All email jobs share one BullMQ queue. For very high volume you might shard by sender or priority.
 
 ---
 
-## feature checklist
+## Feature Checklist
 
-### backend
-- [x] scheduling api (`POST /api/emails/schedule`)
-- [x] batch insert into postgres
-- [x] bullmq delayed jobs (no cron, no node-cron)
-- [x] ethereal smtp sending with preview urls
-- [x] multiple senders (seeded from ethereal, stored in db)
-- [x] restart persistence (jobs in redis, deterministic job ids)
-- [x] idempotency (status check before send, bullmq dedup by job id)
-- [x] configurable worker concurrency (`WORKER_CONCURRENCY`)
-- [x] minimum delay between sends (`MIN_SEND_DELAY_MS` via bullmq limiter)
-- [x] global hourly rate limit (`MAX_EMAILS_PER_HOUR`)
-- [x] per-sender hourly rate limit (`MAX_EMAILS_PER_HOUR_PER_SENDER`)
-- [x] per-batch hourly cap (optional, set in compose modal)
-- [x] redis-backed rate counters (lua script, safe for multi-worker)
-- [x] reschedule to next hour on rate limit (no dropped jobs)
-- [x] handles 1000+ simultaneous jobs correctly
+### Backend
+- [x] Scheduling API (`POST /api/emails/schedule`)
+- [x] Batch insert into Postgres
+- [x] BullMQ delayed jobs (no cron, no node-cron)
+- [x] Ethereal SMTP sending with preview URLs
+- [x] Multiple senders (seeded from Ethereal, stored in DB)
+- [x] Restart persistence (jobs in Redis, deterministic job IDs)
+- [x] Idempotency (status check before send, BullMQ dedup by job ID)
+- [x] Configurable worker concurrency (`WORKER_CONCURRENCY`)
+- [x] Minimum delay between sends (`MIN_SEND_DELAY_MS` via BullMQ limiter)
+- [x] Global hourly rate limit (`MAX_EMAILS_PER_HOUR`)
+- [x] Per-sender hourly rate limit (`MAX_EMAILS_PER_HOUR_PER_SENDER`)
+- [x] Per-batch hourly cap (optional, set in Compose modal)
+- [x] Redis-backed rate counters (Lua script, safe for multi-worker)
+- [x] Reschedule to next hour on rate limit (no dropped jobs)
+- [x] Handles 1000+ simultaneous jobs correctly
 
-### frontend
-- [x] google oauth login (real, not mocked)
-- [x] redirect to dashboard after login
-- [x] header with name, email, avatar, logout
-- [x] dashboard with "scheduled emails" and "sent emails" tabs
-- [x] compose new email button
-- [x] compose modal: subject, body, sender selector
-- [x] csv/txt upload with client-side email parsing and count display
-- [x] start time, delay between emails, hourly limit fields
-- [x] schedule button with loading state
-- [x] scheduled emails table with status badges, loading, empty states
-- [x] sent emails table with ethereal preview links, loading, empty states
-- [x] pagination
-- [x] error toasts
-- [x] typescript types throughout
+### Frontend
+- [x] Google OAuth login (real, not mocked)
+- [x] Redirect to dashboard after login
+- [x] Header with name, email, avatar, and logout button
+- [x] Dashboard with "Scheduled Emails" and "Sent Emails" tabs
+- [x] Compose New Email button
+- [x] Compose modal: subject, body, sender selector
+- [x] CSV/TXT upload with client-side email parsing and count display
+- [x] Start time, delay between emails, and hourly limit fields
+- [x] Schedule button with loading state
+- [x] Scheduled Emails table with status badges, loading, and empty states
+- [x] Sent Emails table with Ethereal preview links, loading, and empty states
+- [x] Pagination
+- [x] Error toasts
+- [x] TypeScript types throughout
