@@ -17,7 +17,7 @@ const statusColors: Record<JobStatus, string> = {
 function StatusBadge({ status }: { status: JobStatus }) {
   return (
     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[status]}`}>
-      {status.toLowerCase()}
+      {status.charAt(0) + status.slice(1).toLowerCase()}
     </span>
   );
 }
@@ -41,7 +41,7 @@ export default function EmailTable({ jobs, loading, type }: EmailTableProps) {
           <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
           <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        loading...
+        Loading...
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default function EmailTable({ jobs, loading, type }: EmailTableProps) {
             d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
           />
         </svg>
-        <p className="text-sm">no {type} emails yet</p>
+        <p className="text-sm">{type === 'scheduled' ? 'No scheduled emails yet' : 'No sent emails yet'}</p>
       </div>
     );
   }
@@ -67,14 +67,14 @@ export default function EmailTable({ jobs, loading, type }: EmailTableProps) {
       <table className="min-w-full divide-y divide-gray-200">
         <thead>
           <tr className="bg-gray-50">
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">recipient</th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">subject</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Recipient</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Subject</th>
             <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-              {type === 'scheduled' ? 'scheduled for' : 'sent at'}
+              {type === 'scheduled' ? 'Scheduled For' : 'Sent At'}
             </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">status</th>
+            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Status</th>
             {type === 'sent' && (
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">preview</th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Preview</th>
             )}
           </tr>
         </thead>
@@ -100,7 +100,7 @@ export default function EmailTable({ jobs, loading, type }: EmailTableProps) {
                       rel="noopener noreferrer"
                       className="text-blue-600 hover:underline"
                     >
-                      view
+                      View
                     </a>
                   ) : (
                     <span className="text-gray-400">—</span>

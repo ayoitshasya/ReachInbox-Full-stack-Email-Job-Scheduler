@@ -22,13 +22,13 @@ export default function Login() {
           </div>
           <div className="text-center">
             <h1 className="text-xl font-semibold text-gray-900">ReachInbox</h1>
-            <p className="mt-1 text-sm text-gray-500">email job scheduler</p>
+            <p className="mt-1 text-sm text-gray-500">Email Job Scheduler</p>
           </div>
         </div>
 
         {error && (
           <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-            authentication failed. please try again.
+            Authentication failed. Please try again.
           </div>
         )}
 
@@ -54,7 +54,7 @@ export default function Login() {
               d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
             />
           </svg>
-          sign in with google
+          Sign in with Google
         </a>
       </div>
     </div>

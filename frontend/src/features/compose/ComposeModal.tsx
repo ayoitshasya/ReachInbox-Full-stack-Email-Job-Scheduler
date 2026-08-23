@@ -49,15 +49,15 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
   }
 
   async function handleSubmit() {
-    if (!subject.trim()) { toast.error('subject is required'); return; }
-    if (!body.trim()) { toast.error('body is required'); return; }
-    if (recipients.length === 0) { toast.error('upload a csv with at least one email'); return; }
-    if (!senderId) { toast.error('select a sender'); return; }
-    if (!scheduledAt) { toast.error('pick a start time'); return; }
+    if (!subject.trim()) { toast.error('Subject is required'); return; }
+    if (!body.trim()) { toast.error('Body is required'); return; }
+    if (recipients.length === 0) { toast.error('Upload a CSV with at least one email'); return; }
+    if (!senderId) { toast.error('Select a sender'); return; }
+    if (!scheduledAt) { toast.error('Pick a start time'); return; }
 
     const startDate = new Date(scheduledAt);
     if (startDate <= new Date()) {
-      toast.error('scheduled time must be in the future');
+      toast.error('Scheduled time must be in the future');
       return;
     }
 
@@ -73,11 +73,11 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
         ...(hourlyLimit ? { batchMaxPerHour: parseInt(hourlyLimit) } : {}),
       });
 
-      toast.success(`scheduled ${result.scheduled} emails`);
+      toast.success(`Scheduled ${result.scheduled} emails`);
       onScheduled();
       handleClose();
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'scheduling failed';
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Scheduling failed';
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -101,11 +101,11 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
   const minDateTime = new Date(Date.now() + 60000).toISOString().slice(0, 16);
 
   return (
-    <Modal open={open} onClose={handleClose} title="compose new email" maxWidth="max-w-2xl">
+    <Modal open={open} onClose={handleClose} title="Compose New Email" maxWidth="max-w-2xl">
       <div className="flex flex-col gap-4">
         {/* sender picker */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">from</label>
+          <label className="text-sm font-medium text-gray-700">From</label>
           <select
             value={senderId}
             onChange={(e) => setSenderId(e.target.value)}
@@ -120,26 +120,26 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
         </div>
 
         <Input
-          label="subject"
+          label="Subject"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="your email subject"
+          placeholder="Your email subject"
         />
 
         <Textarea
-          label="body"
+          label="Body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           rows={5}
-          placeholder="write your email here..."
+          placeholder="Write your email here..."
         />
 
         {/* csv upload */}
         <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-gray-700">recipients (csv or txt)</label>
+          <label className="text-sm font-medium text-gray-700">Recipients (CSV or TXT)</label>
           <div className="flex items-center gap-3">
             <label className="cursor-pointer rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
-              choose file
+              Choose file
               <input
                 ref={fileRef}
                 type="file"
@@ -151,15 +151,15 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
             {fileInfo ? (
               <span className="text-sm text-gray-600">{fileInfo}</span>
             ) : (
-              <span className="text-sm text-gray-400">no file chosen</span>
+              <span className="text-sm text-gray-400">No file chosen</span>
             )}
           </div>
-          <p className="text-xs text-gray-400">one email per line, or comma-separated</p>
+          <p className="text-xs text-gray-400">One email per line, or comma-separated</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">start time</label>
+            <label className="text-sm font-medium text-gray-700">Start time</label>
             <input
               type="datetime-local"
               min={minDateTime}
@@ -170,7 +170,7 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
           </div>
 
           <Input
-            label="delay between emails (seconds)"
+            label="Delay between emails (seconds)"
             type="number"
             min="0.1"
             step="0.1"
@@ -179,7 +179,7 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
           />
 
           <Input
-            label="hourly limit (optional)"
+            label="Hourly limit (optional)"
             type="number"
             min="1"
             placeholder="e.g. 100"
@@ -190,10 +190,10 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
 
         <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-2">
           <Button variant="secondary" onClick={handleClose} disabled={submitting}>
-            cancel
+            Cancel
           </Button>
           <Button onClick={handleSubmit} loading={submitting}>
-            schedule {recipients.length > 0 ? `(${recipients.length})` : ''}
+            Schedule {recipients.length > 0 ? `(${recipients.length})` : ''}
           </Button>
         </div>
       </div>

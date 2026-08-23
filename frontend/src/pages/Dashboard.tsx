@@ -87,7 +87,7 @@ export default function Dashboard() {
   if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center text-gray-400">
-        loading...
+        Loading...
       </div>
     );
   }
@@ -102,14 +102,14 @@ export default function Dashboard() {
       <main className="mx-auto max-w-7xl px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">email scheduler</h1>
-            <p className="mt-1 text-sm text-gray-500">schedule and track your email campaigns</p>
+            <h1 className="text-2xl font-semibold text-gray-900">Email Scheduler</h1>
+            <p className="mt-1 text-sm text-gray-500">Schedule and track your email campaigns</p>
           </div>
           <Button onClick={() => setComposeOpen(true)} size="md">
             <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
             </svg>
-            compose new email
+            Compose New Email
           </Button>
         </div>
 
@@ -126,7 +126,7 @@ export default function Dashboard() {
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
-                {t === 'scheduled' ? 'scheduled emails' : 'sent emails'}
+                {t === 'scheduled' ? 'Scheduled Emails' : 'Sent Emails'}
                 {t === 'scheduled' && scheduledTotal > 0 && (
                   <span className="ml-1.5 rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                     {scheduledTotal}
@@ -185,13 +185,13 @@ function Pagination({
   return (
     <div className="mt-4 flex items-center justify-center gap-2">
       <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => onChange(page - 1)}>
-        previous
+        Previous
       </Button>
       <span className="text-sm text-gray-500">
         {page} / {totalPages}
       </span>
       <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => onChange(page + 1)}>
-        next
+        Next
       </Button>
     </div>
   );

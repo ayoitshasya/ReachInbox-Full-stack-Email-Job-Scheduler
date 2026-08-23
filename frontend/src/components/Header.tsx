@@ -54,7 +54,7 @@ export default function Header({ user, onLogout }: HeaderProps) {
             size="sm"
             onClick={handleLogout}
           >
-            logout
+            Logout
           </Button>
         </div>
       </div>
