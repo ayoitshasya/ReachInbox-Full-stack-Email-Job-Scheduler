@@ -2,7 +2,6 @@ import { User } from '../types';
 import { clearToken } from '../utils/auth';
 import { authApi } from '../utils/api';
 import Button from './Button';
-import toast from 'react-hot-toast';
 
 interface HeaderProps {
   user: User;
