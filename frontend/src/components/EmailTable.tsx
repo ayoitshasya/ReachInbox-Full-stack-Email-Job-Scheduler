@@ -1,4 +1,4 @@
-import { EmailJob, JobStatus } from '../types';
+import type { EmailJob, JobStatus } from '../types';
 
 interface EmailTableProps {
   jobs: EmailJob[];

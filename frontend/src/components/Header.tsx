@@ -1,4 +1,4 @@
-import { User } from '../types';
+import type { User } from '../types';
 import { clearToken } from '../utils/auth';
 import { authApi } from '../utils/api';
 import Button from './Button';

@@ -3,7 +3,7 @@ import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 import { Input, Textarea } from '../../components/Input';
 import { emailsApi } from '../../utils/api';
-import { EmailSender } from '../../types';
+import type { EmailSender } from '../../types';
 import toast from 'react-hot-toast';
 
 interface ComposeModalProps {
