@@ -4,7 +4,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AuthCallback from './pages/AuthCallback';
 import { isLoggedIn } from './utils/auth';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 function PrivateRoute({ children }: { children: ReactNode }) {
   if (!isLoggedIn()) return <Navigate to="/login" replace />;

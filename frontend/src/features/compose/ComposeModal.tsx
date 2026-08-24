@@ -1,4 +1,5 @@
-import { useState, useRef, ChangeEvent } from 'react';
+import { useState, useRef } from 'react';
+import type { ChangeEvent } from 'react';
 import Modal from '../../components/Modal';
 import Button from '../../components/Button';
 import { Input, Textarea } from '../../components/Input';
