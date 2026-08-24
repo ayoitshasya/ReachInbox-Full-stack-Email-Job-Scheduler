@@ -100,8 +100,19 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
   // format datetime-local minimum value
   const minDateTime = new Date(Date.now() + 60000).toISOString().slice(0, 16);
 
+  const footer = (
+    <>
+      <Button variant="secondary" onClick={handleClose} disabled={submitting}>
+        Cancel
+      </Button>
+      <Button onClick={handleSubmit} loading={submitting}>
+        Schedule {recipients.length > 0 ? `(${recipients.length})` : ''}
+      </Button>
+    </>
+  );
+
   return (
-    <Modal open={open} onClose={handleClose} title="Compose New Email" maxWidth="max-w-2xl">
+    <Modal open={open} onClose={handleClose} title="Compose New Email" maxWidth="max-w-2xl" footer={footer}>
       <div className="flex flex-col gap-4">
         {/* sender picker */}
         <div className="flex flex-col gap-1">
@@ -188,14 +199,6 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
           />
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t border-gray-100 pt-2">
-          <Button variant="secondary" onClick={handleClose} disabled={submitting}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} loading={submitting}>
-            Schedule {recipients.length > 0 ? `(${recipients.length})` : ''}
-          </Button>
-        </div>
       </div>
     </Modal>
   );

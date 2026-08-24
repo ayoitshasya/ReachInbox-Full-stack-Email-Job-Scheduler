@@ -5,10 +5,11 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  footer?: ReactNode;
   maxWidth?: string;
 }
 
-export default function Modal({ open, onClose, title, children, maxWidth = 'max-w-xl' }: ModalProps) {
+export default function Modal({ open, onClose, title, children, footer, maxWidth = 'max-w-xl' }: ModalProps) {
   // close on escape key
   useEffect(() => {
     if (!open) return;
@@ -25,8 +26,10 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className={`relative z-10 w-full ${maxWidth} rounded-xl bg-white shadow-xl`}>
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+      {/* flex column + max-h so the modal never overflows the viewport */}
+      <div className={`relative z-10 flex w-full flex-col ${maxWidth} max-h-[90vh] rounded-xl bg-white shadow-xl`}>
+        {/* fixed header */}
+        <div className="flex flex-shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
@@ -41,7 +44,18 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'max-
             </svg>
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+
+        {/* scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5">
+          {children}
+        </div>
+
+        {/* fixed footer — only rendered when passed */}
+        {footer && (
+          <div className="flex flex-shrink-0 items-center justify-end gap-3 border-t border-gray-100 px-6 py-4">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
