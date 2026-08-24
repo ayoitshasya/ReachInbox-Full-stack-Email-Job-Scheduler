@@ -19,6 +19,9 @@ export async function sendEtherealEmail(opts: SendMailOptions): Promise<string |
       user: opts.etherealUser,
       pass: opts.etherealPass,
     },
+    connectionTimeout: 30000,
+    greetingTimeout: 30000,
+    socketTimeout: 30000,
   });
 
   const info = await transporter.sendMail({
