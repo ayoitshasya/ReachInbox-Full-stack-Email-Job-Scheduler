@@ -4,6 +4,17 @@ A full-stack email job scheduler built with Express, BullMQ, Redis, Postgres, an
 
 ---
 
+## Live Deployment
+
+| | URL |
+|---|---|
+| Frontend | https://reach-inbox-full-stack-email-job-sc-ten.vercel.app |
+| Backend | https://reachinbox-full-stack-email-job-scheduler-production.up.railway.app |
+
+**Stack:** Frontend deployed on Vercel. Backend API, Postgres, and Redis all deployed on Railway.
+
+---
+
 ## Quick Start
 
 ### 1. Prerequisites
@@ -139,6 +150,7 @@ Scheduling 1000 emails for the same start time creates 1000 individual BullMQ de
 - **No WebSocket/SSE:** The dashboard polls every 15 seconds for status updates. For a production product you'd want server-sent events or webhooks to push updates.
 - **Prisma:** Chosen for TypeScript-first DX and a clean migration workflow. Drizzle would be lighter, but Prisma's type generation is hard to beat for rapid prototyping.
 - **Single queue:** All email jobs share one BullMQ queue. For very high volume you might shard by sender or priority.
+- **SMTP latency on Railway:** On the hosted deployment, email jobs can occasionally take longer than expected to move from "Processing" to "Sent" status, likely due to outbound SMTP connection latency to Ethereal from Railway's network. This was not observed during local testing and does not affect scheduling, persistence, or rate-limiting logic — all of which were fully verified locally.
 
 ---
 
