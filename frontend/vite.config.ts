@@ -1,3 +1,7 @@
+// Vite build/dev-server configuration for the frontend. Enables the React
+// plugin (JSX + fast refresh) and, for local development, proxies /api
+// requests to the backend so the frontend can call relative API paths
+// without hitting CORS during development.
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 

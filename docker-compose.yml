@@ -1,3 +1,8 @@
+# Local development infrastructure for the backend: spins up the Postgres
+# database (used via Prisma, see backend/prisma/schema.prisma) and the
+# Redis instance (used for BullMQ queues and rate limiting, see
+# backend/src/db/redis.ts) that the backend's DATABASE_URL/REDIS_URL env
+# vars are expected to point at. Run with `docker compose up -d`.
 version: '3.8'
 
 services:
@@ -6,7 +11,10 @@ services:
     ports:
       - '6379:6379'
     volumes:
+      # Named volume so queued/rate-limit data survives container restarts.
       - redis_data:/data
+    # --appendonly yes enables AOF persistence so Redis can recover its
+    # state (e.g. in-flight rate limit counters) after a restart.
     command: redis-server --appendonly yes
     restart: unless-stopped
 
@@ -15,6 +23,8 @@ services:
     ports:
       - '5432:5432'
     environment:
+      # NOTE: these credentials are for local development only — never used
+      # in production, where DATABASE_URL points at a managed Postgres instance.
       POSTGRES_DB: reachinbox
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

@@ -1,3 +1,8 @@
+<!--
+  Single HTML page that hosts the entire React app (a "single-page app").
+  Vite injects/serves this as the app shell; the actual UI is built up by
+  frontend/src/main.tsx mounting into the empty #root div below.
+-->
 <!doctype html>
 <html lang="en">
   <head>
@@ -7,7 +12,10 @@
     <title>frontend</title>
   </head>
   <body>
+    <!-- React takes over this element and renders the whole app inside it -->
     <div id="root"></div>
+    <!-- Vite's dev server / build process handles this module script,
+         resolving and bundling all of main.tsx's imports -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

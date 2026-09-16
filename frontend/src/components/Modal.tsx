@@ -1,3 +1,6 @@
+// Generic, reusable modal dialog (backdrop + header + scrollable body +
+// optional footer) used as the base for feature-specific modals such as
+// features/compose/ComposeModal.tsx.
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
@@ -6,10 +9,23 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  // Optional action row (e.g. Cancel/Submit buttons) pinned to the bottom.
   footer?: ReactNode;
+  // Tailwind max-width utility class, so callers can size the modal per use case.
   maxWidth?: string;
 }
 
+/**
+ * Centered overlay dialog. Renders nothing when `open` is false. Closes via
+ * the backdrop click, the X button, or the Escape key.
+ *
+ * @param open - Whether the modal is currently visible.
+ * @param onClose - Called whenever the user dismisses the modal.
+ * @param title - Heading text shown in the modal's header.
+ * @param children - Main modal content, scrollable if it overflows.
+ * @param footer - Optional fixed footer content (e.g. action buttons).
+ * @param maxWidth - Tailwind width class controlling the modal's max width.
+ */
 export default function Modal({ open, onClose, title, children, footer, maxWidth = 'max-w-xl' }: ModalProps) {
   // close on escape key
   useEffect(() => {

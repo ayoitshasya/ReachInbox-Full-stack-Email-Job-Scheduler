@@ -1,3 +1,6 @@
+// Public sign-in page. Shows a "Sign in with Google" link that kicks off
+// the backend's OAuth flow (backend/src/routes/auth.ts), and redirects
+// already-logged-in users straight to the dashboard.
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../utils/api';
@@ -10,6 +13,9 @@ export default function Login() {
     if (isLoggedIn()) navigate('/dashboard', { replace: true });
   }, [navigate]);
 
+  // Surfaces an error banner if the OAuth flow previously failed and
+  // redirected back here with ?error=... (see AuthCallback.tsx and the
+  // backend's failureRedirect in routes/auth.ts).
   const searchParams = new URLSearchParams(window.location.search);
   const error = searchParams.get('error');
 

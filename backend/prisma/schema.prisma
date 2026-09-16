@@ -1,12 +1,24 @@
+// Prisma schema: the single source of truth for the Postgres database
+// structure used across the whole backend. Running `prisma generate`
+// produces the typed PrismaClient imported everywhere as `prisma` (see
+// backend/src/db/prisma.ts); running `prisma migrate` applies changes here
+// to the actual database (generated migration files live in
+// backend/prisma/migrations/, which are not hand-edited).
+
+// Tells Prisma to generate a JS/TS client library from this schema.
 generator client {
   provider = "prisma-client-js"
 }
 
+// The database this schema maps to — a Postgres instance, whose connection
+// string comes from the DATABASE_URL env var (see backend/src/config.ts).
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// A person who has signed in via Google OAuth. One user can own many
+// scheduled/sent emails (see EmailJob.userId below).
 model User {
   id        String     @id @default(uuid())
   googleId  String     @unique
@@ -17,6 +29,9 @@ model User {
   emailJobs EmailJob[]
 }
 
+// A "From" address the app can send email as — in this project these are
+// auto-created Ethereal test accounts (see backend/src/services/ethereal.ts),
+// not real mailboxes.
 model EmailSender {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -27,6 +42,10 @@ model EmailSender {
   emailJobs    EmailJob[]
 }
 
+// One row per recipient email, whether it's still scheduled or already
+// attempted. This is the durable record of every send; the BullMQ job in
+// Redis (see backend/src/queues/emailQueue.ts) is the transient scheduling
+// mechanism that eventually triggers the worker to update this row's status.
 model EmailJob {
   id          String    @id @default(uuid())
   recipient   String
@@ -39,18 +58,30 @@ model EmailJob {
   scheduledAt DateTime
   sentAt      DateTime?
   status      JobStatus   @default(PENDING)
+  // Id of the corresponding BullMQ job, used to correlate this DB row with
+  // its entry in the Redis-backed queue.
   bullmqJobId String?     @unique
+  // Ethereal's "view this email" URL, populated once the email is actually sent.
   previewUrl  String?
+  // Populated with the error message if sending failed, for display/debugging.
   errorMsg    String?
+  // Groups every recipient created from the same "Compose" submission, so a
+  // batch's rows can be queried/rate-limited together.
   batchId     String?
   createdAt   DateTime   @default(now())
 
+  // Indexes chosen to match the app's actual query patterns: filtering by
+  // user (dashboard lists), by status (scheduled vs. sent tabs), by batch
+  // (rate limiting), and ordering/filtering by scheduledAt (pagination).
   @@index([userId])
   @@index([status])
   @@index([batchId])
   @@index([scheduledAt])
 }
 
+// Lifecycle states an EmailJob moves through. RESCHEDULED specifically means
+// the worker tried to send it but the hourly rate limit was hit, so it was
+// pushed to the next hour window (see backend/src/services/rateLimiter.ts).
 enum JobStatus {
   PENDING
   PROCESSING

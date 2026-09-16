@@ -1,3 +1,7 @@
+// The "Compose New Email" feature: a modal form for writing an email,
+// uploading a CSV/TXT list of recipients, choosing a sender and schedule,
+// and submitting the batch to the backend's POST /api/emails/schedule
+// endpoint (see backend/src/routes/emails.ts). Rendered by pages/Dashboard.tsx.
 import { useState, useRef } from 'react';
 import type { ChangeEvent } from 'react';
 import Modal from '../../components/Modal';
@@ -10,10 +14,21 @@ import toast from 'react-hot-toast';
 interface ComposeModalProps {
   open: boolean;
   onClose: () => void;
+  // Available "From" addresses to populate the sender dropdown.
   senders: EmailSender[];
+  // Called after a successful schedule so the parent can refresh/switch tabs.
   onScheduled: () => void;
 }
 
+/**
+ * Extracts valid-looking email addresses from raw uploaded file text,
+ * accepting either newline-separated or comma-separated (CSV-style) lists,
+ * and silently drops any line that isn't a plausible email (e.g. a CSV
+ * header row like "email" or blank lines).
+ *
+ * @param text - Raw contents of the uploaded .csv/.txt file.
+ * @returns Lower-cased, trimmed email addresses that matched the pattern.
+ */
 function parseEmailsFromText(text: string): string[] {
   // handles csv content or newline-separated emails, strips headers
   const lines = text.split(/[\r\n,]+/);
@@ -23,6 +38,14 @@ function parseEmailsFromText(text: string): string[] {
     .filter((l) => emailRegex.test(l));
 }
 
+/**
+ * Modal form for composing and scheduling a batch email send.
+ *
+ * @param open - Whether the modal is visible.
+ * @param onClose - Called when the modal should be dismissed (cancel, X, escape).
+ * @param senders - Selectable sender accounts.
+ * @param onScheduled - Called after a batch is successfully scheduled.
+ */
 export default function ComposeModal({ open, onClose, senders, onScheduled }: ComposeModalProps) {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
@@ -35,6 +58,8 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
   const [submitting, setSubmitting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
+  // Reads the chosen CSV/TXT file entirely in the browser (no upload to the
+  // server needed for parsing) and extracts the recipient list from it.
   function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -49,6 +74,8 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
     reader.readAsText(file);
   }
 
+  // Validates the form client-side (mirroring but not replacing the
+  // server-side checks in routes/emails.ts) before calling the schedule API.
   async function handleSubmit() {
     if (!subject.trim()) { toast.error('Subject is required'); return; }
     if (!body.trim()) { toast.error('Body is required'); return; }
@@ -78,6 +105,9 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
       onScheduled();
       handleClose();
     } catch (err: unknown) {
+      // Axios error responses carry the server's JSON error under
+      // `response.data.error` (see routes/emails.ts's `res.status(...).json({ error })`
+      // pattern); fall back to a generic message if the shape doesn't match.
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Scheduling failed';
       toast.error(msg);
     } finally {
@@ -85,6 +115,9 @@ export default function ComposeModal({ open, onClose, senders, onScheduled }: Co
     }
   }
 
+  // Resets all form fields back to their defaults and closes the modal —
+  // used both for the Cancel button and after a successful submission, so
+  // reopening the modal always starts from a clean state.
   function handleClose() {
     setSubject('');
     setBody('');

@@ -1,3 +1,7 @@
+// Landing page for the Google OAuth redirect (/auth/callback). The backend
+// (backend/src/routes/auth.ts) sends the browser here with a signed JWT in
+// the query string after a successful login; this page just needs to pick
+// that token up, store it, and continue on to the dashboard.
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { setToken } from '../utils/auth';
@@ -10,9 +14,13 @@ export default function AuthCallback() {
     const token = params.get('token');
 
     if (token) {
+      // Persist the JWT (see utils/auth.ts) so future API calls (utils/api.ts's
+      // request interceptor) can attach it automatically.
       setToken(token);
       navigate('/dashboard', { replace: true });
     } else {
+      // Reaching this page without a token means the OAuth flow didn't
+      // complete as expected — send the user back to try again.
       navigate('/login?error=no_token', { replace: true });
     }
   }, [navigate]);

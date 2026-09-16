@@ -1,11 +1,19 @@
+// Table component that renders a list of email jobs (either the "Scheduled"
+// or "Sent" tab) with loading/empty states, a colored status badge, and
+// (for sent emails) a link to the Ethereal preview URL. Used by
+// pages/Dashboard.tsx.
 import type { EmailJob, JobStatus } from '../types';
 
 interface EmailTableProps {
   jobs: EmailJob[];
   loading: boolean;
+  // Determines which date column to show (scheduledAt vs sentAt) and
+  // whether the Preview column appears.
   type: 'scheduled' | 'sent';
 }
 
+// Background/text color pairing per job status, matched to the JobStatus
+// enum defined on the backend (backend/prisma/schema.prisma).
 const statusColors: Record<JobStatus, string> = {
   PENDING: 'bg-yellow-100 text-yellow-800',
   PROCESSING: 'bg-blue-100 text-blue-800',
@@ -14,6 +22,12 @@ const statusColors: Record<JobStatus, string> = {
   RESCHEDULED: 'bg-purple-100 text-purple-800',
 };
 
+/**
+ * Small colored pill showing a job's status in a human-readable,
+ * capitalized form (e.g. "PENDING" -> "Pending").
+ *
+ * @param status - The raw job status value from the API.
+ */
 function StatusBadge({ status }: { status: JobStatus }) {
   return (
     <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${statusColors[status]}`}>
@@ -22,6 +36,13 @@ function StatusBadge({ status }: { status: JobStatus }) {
   );
 }
 
+/**
+ * Formats an ISO date string into a short, readable local date/time
+ * (e.g. "Aug 16, 2026, 02:30 PM"), or an em dash if no date is present.
+ *
+ * @param iso - ISO 8601 date string, or null/undefined if not yet set
+ *              (e.g. an email that hasn't been sent yet has no sentAt).
+ */
 function formatDate(iso: string | null | undefined) {
   if (!iso) return '—';
   return new Intl.DateTimeFormat('en-US', {
@@ -33,6 +54,15 @@ function formatDate(iso: string | null | undefined) {
   }).format(new Date(iso));
 }
 
+/**
+ * Renders a table of email jobs, or a loading spinner / empty-state message
+ * in place of the table when appropriate.
+ *
+ * @param jobs - The page of email jobs to display.
+ * @param loading - When true, shows a spinner instead of the table.
+ * @param type - 'scheduled' or 'sent', controlling which date column and
+ *               extra columns are shown.
+ */
 export default function EmailTable({ jobs, loading, type }: EmailTableProps) {
   if (loading) {
     return (

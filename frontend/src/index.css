@@ -1,7 +1,14 @@
+/* Global stylesheet for the frontend, imported once in main.tsx.
+   Pulls in Tailwind's generated CSS layers (configured in
+   tailwind.config.js / postcss.config.js) and adds a small set of
+   app-wide base style resets on top. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Use border-box everywhere so padding/border don't enlarge elements
+   beyond their declared width/height — avoids layout surprises when
+   Tailwind utility classes set both width and padding on the same element. */
 * {
   box-sizing: border-box;
 }

@@ -1,11 +1,18 @@
+// Reusable styled button component shared across the app (used in Header,
+// Dashboard, ComposeModal, etc.) so button appearance stays consistent
+// without repeating Tailwind class strings everywhere.
 import type { ButtonHTMLAttributes } from 'react';
 
+// Extends the native <button> props so callers can still pass onClick,
+// type, disabled, etc. straight through, plus our own styling options.
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
 }
 
+// Tailwind class sets per visual variant, keyed so they can be looked up
+// dynamically from the `variant` prop below.
 const variantClasses = {
   primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
   secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50',
@@ -19,6 +26,19 @@ const sizeClasses = {
   lg: 'px-6 py-3 text-base',
 };
 
+/**
+ * Styled <button> supporting a small set of visual variants/sizes and a
+ * built-in loading spinner state. All other native button props (onClick,
+ * type, disabled, etc.) pass straight through via `...props`.
+ *
+ * @param variant - Visual style; defaults to 'primary'.
+ * @param size - Padding/text size preset; defaults to 'md'.
+ * @param loading - When true, shows a spinner and disables the button even
+ *                   if `disabled` wasn't explicitly set.
+ * @param disabled - Standard HTML disabled flag; combined with `loading`.
+ * @param children - Button label/content.
+ * @param className - Extra classes appended after the built-in styling.
+ */
 export default function Button({
   variant = 'primary',
   size = 'md',

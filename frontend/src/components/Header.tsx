@@ -1,3 +1,5 @@
+// Top navigation bar shown on the dashboard: app branding, the logged-in
+// user's avatar/name/email, and a logout button. Used by pages/Dashboard.tsx.
 import type { User } from '../types';
 import { clearToken } from '../utils/auth';
 import { authApi } from '../utils/api';
@@ -5,12 +7,23 @@ import Button from './Button';
 
 interface HeaderProps {
   user: User;
+  // Called after logout completes so the parent (Dashboard) can navigate away.
   onLogout: () => void;
 }
 
+/**
+ * App header displaying the current user's identity and a logout control.
+ *
+ * @param user - The currently authenticated user's profile.
+ * @param onLogout - Callback invoked once the token is cleared, so the
+ *                    parent can redirect to the login page.
+ */
 export default function Header({ user, onLogout }: HeaderProps) {
   async function handleLogout() {
     try {
+      // Best-effort call to let the server know (useful if/when server-side
+      // session invalidation is added later); JWTs are stateless so this
+      // isn't required for the client-side logout to work.
       await authApi.logout();
     } catch {
       // best-effort, proceed regardless

@@ -1,3 +1,9 @@
+// Shared TypeScript types for API data used across the frontend. These
+// mirror the shapes returned by the backend (backend/prisma/schema.prisma
+// and backend/src/routes/*.ts) so components can rely on consistent typing
+// instead of redeclaring these shapes locally.
+
+// The authenticated user's profile, as returned by GET /api/auth/me.
 export interface User {
   id: string;
   email: string;
@@ -6,8 +12,11 @@ export interface User {
   createdAt: string;
 }
 
+// Mirrors the backend's Prisma `JobStatus` enum (backend/prisma/schema.prisma).
 export type JobStatus = 'PENDING' | 'PROCESSING' | 'SENT' | 'FAILED' | 'RESCHEDULED';
 
+// A single scheduled/sent email, as returned by GET /api/emails/scheduled
+// and GET /api/emails/sent.
 export interface EmailJob {
   id: string;
   recipient: string;
@@ -26,12 +35,14 @@ export interface EmailJob {
   };
 }
 
+// A selectable "From" address, as returned by GET /api/emails/senders.
 export interface EmailSender {
   id: string;
   email: string;
   displayName: string;
 }
 
+// Generic shape for paginated list endpoints (scheduled/sent emails).
 export interface PaginatedResponse<T> {
   items: T[];
   total: number;
@@ -39,6 +50,7 @@ export interface PaginatedResponse<T> {
   limit: number;
 }
 
+// Request body sent to POST /api/emails/schedule when composing a new batch.
 export interface ScheduleEmailPayload {
   recipients: string[];
   subject: string;

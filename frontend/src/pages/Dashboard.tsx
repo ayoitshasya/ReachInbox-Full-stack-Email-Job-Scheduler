@@ -1,3 +1,9 @@
+// Main authenticated screen of the app: fetches the current user and
+// available senders, lists the user's scheduled and sent emails in two
+// tabs with pagination, auto-refreshes the "scheduled" tab periodically,
+// and hosts the ComposeModal for creating new batches.
+// Closely related to: components/Header.tsx, components/EmailTable.tsx,
+// features/compose/ComposeModal.tsx, utils/api.ts.
 import { useState, useEffect, useCallback } from 'react';
 import Header from '../components/Header';
 import EmailTable from '../components/EmailTable';
@@ -30,6 +36,9 @@ export default function Dashboard() {
 
   const PAGE_SIZE = 20;
 
+  // On mount: load the current user's profile (also acts as an auth check —
+  // if the stored token is invalid/expired, the request fails and we bounce
+  // to login) and the list of available senders for the compose form.
   useEffect(() => {
     authApi.getMe()
       .then(setUser)
@@ -40,6 +49,8 @@ export default function Dashboard() {
     emailsApi.getSenders().then(setSenders).catch(() => {});
   }, [navigate]);
 
+  // Wrapped in useCallback so this stable function reference can safely be
+  // used as a dependency in the effects below without causing extra re-runs.
   const fetchScheduled = useCallback(async (page: number) => {
     setLoadingScheduled(true);
     try {
@@ -62,10 +73,15 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Re-fetch whenever the relevant page number changes (including the
+  // initial mount).
   useEffect(() => { fetchScheduled(scheduledPage); }, [fetchScheduled, scheduledPage]);
   useEffect(() => { fetchSent(sentPage); }, [fetchSent, sentPage]);
 
   // poll scheduled tab every 15s to catch status changes
+  // Scheduled emails can flip to PROCESSING/SENT/RESCHEDULED/FAILED in the
+  // background (via the worker), so we poll while that tab is active to
+  // keep statuses reasonably fresh without needing websockets.
   useEffect(() => {
     const id = setInterval(() => {
       if (tab === 'scheduled') fetchScheduled(scheduledPage);
@@ -78,6 +94,8 @@ export default function Dashboard() {
     navigate('/login');
   }
 
+  // After a batch is successfully scheduled, jump to the Scheduled tab and
+  // reload page 1 so the newly created emails are immediately visible.
   function handleScheduled() {
     setTab('scheduled');
     fetchScheduled(1);
@@ -173,6 +191,14 @@ export default function Dashboard() {
   );
 }
 
+/**
+ * Simple Previous/Next pager shown below a table when there's more than one
+ * page of results. Purely presentational — the parent owns the page state.
+ *
+ * @param page - Current 1-indexed page number.
+ * @param totalPages - Total number of pages available.
+ * @param onChange - Called with the new page number when Previous/Next is clicked.
+ */
 function Pagination({
   page,
   totalPages,
